@@ -3,12 +3,49 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.net.Socket;
+import java.io.*;
+import java.nio.*;
+import java.security.*;
+import java.security.spec.*;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-public class ClientWithoutSecurity {
+class PublicKeyReader {
+ 
+	public static PublicKey get(String filename)
+	  throws Exception {
+   
+	  byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
+   
+	  X509EncodedKeySpec spec =
+		new X509EncodedKeySpec(keyBytes);
+	  KeyFactory kf = KeyFactory.getInstance("RSA");
+	  return kf.generatePublic(spec);
+	}
+}
+
+public class ClientWithAP {
 
 	public static void main(String[] args) {
+		try{
+			InputStream inputStream = new FileInputStream("keys_certificate/example-19fb0430-7c8f-11ea-ae9d-89114163ae84.crt");
+			CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			X509Certificate CAcert = (X509Certificate)cf.generateCertificate(inputStream);			
+			CAcert.checkValidity();
+	
+			// get public key
+			PublicKey serverPublicKey = CAcert.getPublicKey();
+			CAcert.verify(serverPublicKey);
+			System.out.println(serverPublicKey);
+		}
+		catch (Exception e){
+			System.out.println("[ERROR!] " + e);
+		}
 
-    	String filename = "100.txt";
+	String filename = "100.txt";
     	if (args.length > 0) filename = args[0];
 
     	String serverAddress = "localhost";
