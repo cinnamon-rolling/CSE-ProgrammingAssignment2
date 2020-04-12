@@ -40,7 +40,7 @@ public class ClientWithAP {
 		try {
 			// get server cert
 			X509Certificate serverCert = CertificateReader
-					.get("keys_certificate_2/example-e0067250-7c9d-11ea-ae9d-89114163ae84.crt");
+					.get("keys_certificate/example-19fb0430-7c8f-11ea-ae9d-89114163ae84.crt");
 			serverCert.checkValidity();
 
 			// get server public key
