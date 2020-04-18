@@ -9,17 +9,6 @@ import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
 
-class PrivateKeyReader {
-
-	static PrivateKey get(String filename) throws Exception {
-
-		byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
-		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-		KeyFactory kf = KeyFactory.getInstance("RSA");
-		return kf.generatePrivate(spec);
-	}
-}
-
 public class ServerWithAP {
 
 	public static void main(String[] args) {
@@ -52,12 +41,24 @@ public class ServerWithAP {
 			fromClient = new DataInputStream(connectionSocket.getInputStream());
 			toClient = new DataOutputStream(connectionSocket.getOutputStream());
 
+			// stateless, keep looping to get packet type, read packet
 			while (!connectionSocket.isClosed()) {
-
 				int packetType = fromClient.readInt();
+				// AP
+				// do authentication
+				if (packetType == 69) {
+					System.out.println("client requested for authentication");
+					toClient.writeUTF("hi, this is secstore");
+				}
+				if (packetType == 70) {
+					toClient.writeUTF("valid_cert");
+				}
+				if (packetType == 71) {
+					System.out.println("client closed connection due to failed AP");
+				}
 
 				// If the packet is for transferring the filename
-				if (packetType == 0) {
+				if (packetType == 0) { // 0 => file name
 
 					System.out.println("Receiving file...");
 
@@ -71,7 +72,7 @@ public class ServerWithAP {
 					bufferedFileOutputStream = new BufferedOutputStream(fileOutputStream);
 
 					// If the packet is for transferring a chunk of the file
-				} else if (packetType == 1) {
+				} else if (packetType == 1) { // 1 => file chunk
 
 					int numBytes = fromClient.readInt();
 					byte[] block = new byte[numBytes];

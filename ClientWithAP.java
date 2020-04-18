@@ -13,27 +13,6 @@ import java.security.cert.X509Certificate;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-class PublicKeyReader {
-
-	public static PublicKey get(String filename) throws Exception {
-
-		byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
-
-		X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-		KeyFactory kf = KeyFactory.getInstance("RSA");
-		return kf.generatePublic(spec);
-	}
-}
-
-class CertificateReader {
-
-	public static X509Certificate get(String filename) throws Exception {
-		InputStream inputStream = new FileInputStream(filename);
-		CertificateFactory cf = CertificateFactory.getInstance("X.509");
-		return (X509Certificate) cf.generateCertificate(inputStream);
-	}
-}
-
 public class ClientWithAP {
 
 	public static void main(String[] args) {
@@ -48,8 +27,7 @@ public class ClientWithAP {
 			System.out.println(serverPublicKey);
 
 			// get CA cert
-			X509Certificate CAcert = CertificateReader
-					.get("keys_certificate/cacse.crt");
+			X509Certificate CAcert = CertificateReader.get("keys_certificate/cacse.crt");
 
 			// get CA public key
 			PublicKey CAPublicKey = CAcert.getPublicKey();
@@ -96,10 +74,22 @@ public class ClientWithAP {
 			toServer = new DataOutputStream(clientSocket.getOutputStream());
 			fromServer = new DataInputStream(clientSocket.getInputStream());
 
-			System.out.println("Sending file...");
+			// do authentication
+			toServer.writeInt(69); // 69 => ask to prove identity
+			String encryptedM = fromServer.readUTF();
+			toServer.writeInt(70); // 70 => ask for cert signed by CA
+			String serverCert = fromServer.readUTF();
+			String serverCertExpected = "valid_cert";
+			System.out.println(serverCert);
+			if (!serverCert.contentEquals(serverCertExpected)) {
+				toServer.writeInt(71); // 71 => invalid cert, close connection
+				System.out.println("Closing connection...");
+				clientSocket.close();
+			}
 
+			System.out.println("Sending file...");
 			// Send the filename
-			toServer.writeInt(0);
+			toServer.writeInt(0); // 0 => file name
 			toServer.writeInt(filename.getBytes().length);
 			toServer.write(filename.getBytes());
 			//toServer.flush();
@@ -115,7 +105,7 @@ public class ClientWithAP {
 				numBytes = bufferedFileInputStream.read(fromFileBuffer);
 				fileEnded = numBytes < 117;
 
-				toServer.writeInt(1);
+				toServer.writeInt(1); // 1 => file chunk
 				toServer.writeInt(numBytes);
 				toServer.write(fromFileBuffer);
 				toServer.flush();
