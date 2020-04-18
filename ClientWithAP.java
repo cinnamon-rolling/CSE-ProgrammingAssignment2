@@ -12,34 +12,18 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
 
 public class ClientWithAP {
 
-	public static void main(String[] args) {
-		try {
-			// get server cert
-			X509Certificate serverCert = CertificateReader
-					.get("keys_certificate/example-19fb0430-7c8f-11ea-ae9d-89114163ae84.crt");
-			serverCert.checkValidity();
+	public static void main(String[] args) throws Exception {
 
-			// get server public key
-			PublicKey serverPublicKey = serverCert.getPublicKey();
-			System.out.println(serverPublicKey);
+		// get CA cert
+		X509Certificate CAcert = CertificateReader.get("keys_certificate/cacse.crt");
 
-			// get CA cert
-			X509Certificate CAcert = CertificateReader.get("keys_certificate/cacse.crt");
-
-			// get CA public key
-			PublicKey CAPublicKey = CAcert.getPublicKey();
-			System.out.println(CAPublicKey);
-
-			System.out.println("serverPublicKey: " + serverPublicKey);
-			System.out.println("CAPublicKey: " + CAPublicKey);
-			serverCert.verify(CAPublicKey);
-			System.out.println("Server's certificate is verified");
-		} catch (Exception e) {
-			System.out.println("[ERROR!] " + e);
-		}
+		// get CA public key
+		PublicKey CAPublicKey = CAcert.getPublicKey();
+		System.out.println("CAPublicKey: " + CAPublicKey);
 
 		String filename = "100.txt";
 		if (args.length > 0)
@@ -78,15 +62,29 @@ public class ClientWithAP {
 			toServer.writeInt(69); // 69 => ask to prove identity
 			String encryptedM = fromServer.readUTF();
 			toServer.writeInt(70); // 70 => ask for cert signed by CA
-			String serverCert = fromServer.readUTF();
-			String serverCertExpected = "valid_cert";
-			System.out.println(serverCert);
-			if (!serverCert.contentEquals(serverCertExpected)) {
+
+			// receive cert from server
+			System.out.println("receiving server's certificate in string");
+			String serverCertString = fromServer.readUTF();
+			X509Certificate serverCert = CertificateReader.get_from_string(serverCertString);
+
+			// get server public key
+			PublicKey serverPublicKey = serverCert.getPublicKey();
+			System.out.println("serverPublicKey: " + serverPublicKey);
+
+			// verify server's certificate
+			try {
+				serverCert.checkValidity();
+				serverCert.verify(CAPublicKey);
+			} catch (Exception e) {
+				e.printStackTrace();
 				toServer.writeInt(71); // 71 => invalid cert, close connection
 				System.out.println("Closing connection...");
 				clientSocket.close();
 			}
+			System.out.println("Server's certificate is verified");
 
+			// begin handshake for file upload
 			System.out.println("Sending file...");
 			// Send the filename
 			toServer.writeInt(0); // 0 => file name

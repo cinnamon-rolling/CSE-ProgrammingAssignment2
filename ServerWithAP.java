@@ -4,24 +4,26 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.cert.X509Certificate;
 import java.io.*;
 import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
+import java.util.Base64;
 
 public class ServerWithAP {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+
+		// get server cert
+		X509Certificate serverCert = CertificateReader
+				.get("keys_certificate/example-19fb0430-7c8f-11ea-ae9d-89114163ae84.crt");
 
 		// read S private key
 		PrivateKey serverPrivateKey;
-		try {
-			serverPrivateKey = PrivateKeyReader.get("keys_certificate/private_key.der");
-			System.out.println();
-			System.out.println(serverPrivateKey);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		serverPrivateKey = PrivateKeyReader.get("keys_certificate/private_key.der");
+		System.out.println();
+		System.out.println(serverPrivateKey);
 
 		int port = 4321;
 		if (args.length > 0)
@@ -51,7 +53,8 @@ public class ServerWithAP {
 					toClient.writeUTF("hi, this is secstore");
 				}
 				if (packetType == 70) {
-					toClient.writeUTF("valid_cert");
+					toClient.writeUTF(Base64.getEncoder().encodeToString(serverCert.getEncoded()));
+					break;
 				}
 				if (packetType == 71) {
 					System.out.println("client closed connection due to failed AP");
