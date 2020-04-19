@@ -43,6 +43,8 @@ public class ServerWithAP {
 			fromClient = new DataInputStream(connectionSocket.getInputStream());
 			toClient = new DataOutputStream(connectionSocket.getOutputStream());
 
+			int packetCount = 0;
+
 			// stateless, keep looping to get packet type, read packet
 			while (!connectionSocket.isClosed()) {
 				int packetType = fromClient.readInt();
@@ -54,7 +56,7 @@ public class ServerWithAP {
 				}
 				if (packetType == 70) {
 					toClient.writeUTF(Base64.getEncoder().encodeToString(serverCert.getEncoded()));
-					break;
+					// break;
 				}
 				if (packetType == 71) {
 					System.out.println("client closed connection due to failed AP");
@@ -76,13 +78,28 @@ public class ServerWithAP {
 
 					// If the packet is for transferring a chunk of the file
 				} else if (packetType == 1) { // 1 => file chunk
+					// receive 3 packets
+					// numBytes = number of bytes before encryption, to be written
+					// numBytesEncrypted = number of bytes after encryption, to be read from the buffer
 
+					// receive all 3 packets
 					int numBytes = fromClient.readInt();
-					byte[] block = new byte[numBytes];
-					fromClient.readFully(block, 0, numBytes);
+					int numBytesEncrypted = fromClient.readInt();
+					byte[] block = new byte[numBytesEncrypted];
+					fromClient.readFully(block, 0, numBytesEncrypted);
+
+					// count
+					packetCount++;
+					System.out.println("packetCount:" + packetCount);
+
+					// decrypt the data
+					byte[] blockDecrypted = RSA.decrypt(block, serverPrivateKey);
+
+					// print the packet in string
+					System.out.println(Base64.getEncoder().encodeToString(blockDecrypted));
 
 					if (numBytes > 0)
-						bufferedFileOutputStream.write(block, 0, numBytes);
+						bufferedFileOutputStream.write(blockDecrypted, 0, numBytes);
 
 					if (numBytes < 117) {
 						System.out.println("Closing connection...");
@@ -96,7 +113,6 @@ public class ServerWithAP {
 						connectionSocket.close();
 					}
 				}
-
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

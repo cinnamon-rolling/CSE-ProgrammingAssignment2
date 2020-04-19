@@ -98,15 +98,40 @@ public class ClientWithAP {
 
 			byte[] fromFileBuffer = new byte[117];
 
+			int packetCount = 0;
+
 			// Send the file
 			for (boolean fileEnded = false; !fileEnded;) {
+				// send 3 packets
+				// numBytes = number of bytes before encryption, to be written
+				// numBytesEncrypted = number of bytes after encryption, to be read from the buffer
+
 				numBytes = bufferedFileInputStream.read(fromFileBuffer);
 				fileEnded = numBytes < 117;
 
 				toServer.writeInt(1); // 1 => file chunk
 				toServer.writeInt(numBytes);
-				toServer.write(fromFileBuffer);
+				System.out.println(numBytes);
+
+				System.out.println("original bytes: " + fromFileBuffer);
+				System.out.println("before encryption length: " + fromFileBuffer.length);
+
+				// encrypt the data
+				byte[] fromFileBufferEncrypted = RSA.encrypt(fromFileBuffer, serverPublicKey);
+
+				int numBytesEncryted = fromFileBufferEncrypted.length;
+				toServer.writeInt(numBytesEncryted);
+				System.out.println(numBytesEncryted);
+
+				// send the data
+				toServer.write(fromFileBufferEncrypted);
 				toServer.flush();
+
+				// count and print the packet in string
+				packetCount++;
+				System.out.println("packetCount:" + packetCount);
+				System.out.println(Base64.getEncoder().encodeToString(fromFileBuffer));
+
 			}
 
 			bufferedFileInputStream.close();
