@@ -5,54 +5,33 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import javax.crypto.*;
 import java.util.Base64;
-
+import java.security.Key;
+import javax.crypto.Cipher;
 
 public class AES {
-    public static void main(String[] args) throws Exception {
-        String fileName = "src/shorttext.txt";
-//        String fileName = "src/longtext.txt";
-        String data = "";
-        String line;
-        BufferedReader bufferedReader = new BufferedReader( new FileReader(fileName));
-        while((line= bufferedReader.readLine())!=null){
-            data = data +"\n" + line;
+
+        // AES encrypt
+        public static byte[] encrypt(byte[] byteArray, Key symmetricKey) throws Exception{
+                // instantiate cipher
+                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS1Padding");
+                aesCipher.init(Cipher.ENCRYPT_MODE, symmetricKey);
+                
+                // encrypt message
+                byte [] encryptedBytesArray = aesCipher.doFinal(byteArray);
+                System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: "
+                                + encryptedBytesArray.length);
+                return encryptedBytesArray;
         }
-        System.out.println("Original content: "+ data);
 
-//TODO: generate secret key using DES algorithm
-        KeyGenerator keyGen = KeyGenerator.getInstance("DES");
-        SecretKey desKey = keyGen.generateKey();
-
-//TODO: create cipher object, initialize the ciphers with the given key, choose encryption mode as DES
-        Cipher desCipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
-        desCipher.init(Cipher.ENCRYPT_MODE, desKey);
-
-//TODO: do encryption, by calling method Cipher.doFinal().
-        byte[] dataByteArray = data.getBytes();
-        byte[] encryptedBytesArray = desCipher.doFinal(dataByteArray);
-        // System.out.println(new String(encryptedBytesArray));
-
-//TODO: print the length of output encrypted byte[], compare the length of file smallSize.txt and largeSize.txt
-        System.out.println(encryptedBytesArray.length);
-
-//TODO: do format conversion. Turn the encrypted byte[] format into base64format String using Base64
-        String dataEncrypted = Base64.getEncoder().encodeToString(encryptedBytesArray);
-
-//TODO: print the encrypted message (in base64format String format)
-        System.out.println(dataEncrypted);
-
-//TODO: create cipher object, initialize the ciphers with the given key, choose decryption mode as DES
-        desCipher.init(Cipher.DECRYPT_MODE, desKey);
-
-//TODO: do decryption, by calling method Cipher.doFinal().
-        byte[] decryptedBytesArray = desCipher.doFinal(encryptedBytesArray);
-
-//TODO: do format conversion. Convert the decrypted byte[] to String, using "String a = new String(byte_array);"
-        String decryptedData = new String(decryptedBytesArray);
-
-//TODO: print the decrypted String text and compare it with original text
-         System.out.println(decryptedData);
-         System.out.println(encryptedBytesArray);
-         System.out.println(encryptedBytesArray.length);
-    }
+        // AES decrypt
+        public static byte[] decrypt(byte[] byteArray, Key symmetricKey) throws Exception{
+                // instantiate cipher
+                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS1Padding");
+                aesCipher.init(Cipher.DECRYPT_MODE, symmetricKey);
+                // decrypt message
+                byte [] decryptedBytesArray = aesCipher.doFinal(byteArray);
+                System.out.println("decryptedBytesArray: " + decryptedBytesArray + "\nLength of decryptedBytesArray: "
+                                + decryptedBytesArray.length);
+                return decryptedBytesArray;
+        }
 }

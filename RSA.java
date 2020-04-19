@@ -1,19 +1,17 @@
-import java.io.InputStream;
 import java.security.*;
-import java.security.PublicKey;
 import javax.crypto.Cipher;
 
 public class RSA {
 
         // RSA encrypt
         public static byte[] encrypt(byte[] byteArray, Key key) throws Exception {
-                // instantiate cypher
+                // instantiate cipher
                 Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
                 rsaCipher.init(Cipher.ENCRYPT_MODE, key);
 
                 System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
 
-                // decrypt message
+                // encrypt message
                 byte[] encryptedBytesArray = rsaCipher.doFinal(byteArray);
                 System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: "
                                 + encryptedBytesArray.length);
