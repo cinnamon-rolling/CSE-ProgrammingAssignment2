@@ -11,6 +11,8 @@ public class RSA {
                 Cipher rsaCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
                 rsaCipher.init(Cipher.ENCRYPT_MODE, key);
 
+                System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
+
                 // decrypt message
                 byte[] encryptedBytesArray = rsaCipher.doFinal(byteArray);
                 System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: "
@@ -24,6 +26,8 @@ public class RSA {
                 // instantiate cypher
                 Cipher desCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
                 desCipher.init(Cipher.DECRYPT_MODE, key);
+
+                System.out.println("BytesArray: " + byteArray + "\nLength of BytesArray: " + byteArray.length);
 
                 // decrypt message
                 byte[] decryptedBytesArray = desCipher.doFinal(byteArray);
