@@ -24,8 +24,8 @@ public class ServerWithCP2 {
 		// read S private key
 		PrivateKey serverPrivateKey;
 		serverPrivateKey = PrivateKeyReader.get("keys_certificate/private_key.der");
-		System.out.println();
 		System.out.println(serverPrivateKey);
+		System.out.println();
 
 		int port = 4321;
 		if (args.length > 0)
@@ -39,34 +39,7 @@ public class ServerWithCP2 {
 		FileOutputStream fileOutputStream = null;
 		BufferedOutputStream bufferedFileOutputStream = null;
 
-		// send symmetric key
-		ServerSocket symKeySocket = null;
-		Socket toConnect = null;
-		DataOutputStream keyOut = null;
-		DataInputStream keyIn = null;
-
-		InputStream inStream = null;
-		BufferedOutputStream bufferedSymKey = null;
-
-		int portKey = 1234;
-		
 		try {
-			symKeySocket = new ServerSocket(portKey);
-			toConnect = symKeySocket.accept();
-			System.out.println("Connection from 1234 accepted");
-	
-			// get input stream from connected socket
-			inStream = toConnect.getInputStream();
-			// read data from instread socket
-			keyIn = new DataInputStream(inStream);
-	
-			// read message from socket
-			String symKey = keyIn.readUTF();
-			System.out.println("symKey is: " + symKey);
-			
-			// close
-			symKeySocket.close();
-			toConnect.close();
 			welcomeSocket = new ServerSocket(port);
 			connectionSocket = welcomeSocket.accept();
 			fromClient = new DataInputStream(connectionSocket.getInputStream());
@@ -74,14 +47,20 @@ public class ServerWithCP2 {
 
 			int packetCount = 0;
 
+			Key AESKey = new SecretKeySpec("hi".getBytes(), 0, 1, "AES");
 			// stateless, keep looping to get packet type, read packet
 			while (!connectionSocket.isClosed()) {
 				int packetType = fromClient.readInt();
 				// AP
 				// do authentication
+				String clientMessage;
 				if (packetType == 69) {
 					System.out.println("client requested for authentication");
-					toClient.writeUTF("hi, this is secstore");
+					clientMessage = fromClient.readUTF();
+					String encryptedClientMessage = Base64.getEncoder()
+							.encodeToString(RSA.encrypt(clientMessage.getBytes(), serverPrivateKey));
+					toClient.writeUTF(encryptedClientMessage);
+					System.out.println();
 				}
 				if (packetType == 70) {
 					toClient.writeUTF(Base64.getEncoder().encodeToString(serverCert.getEncoded()));
@@ -90,9 +69,20 @@ public class ServerWithCP2 {
 				if (packetType == 71) {
 					System.out.println("client closed connection due to failed AP");
 				}
+				if (packetType == 72) {
+					// read message from socket
+					String symKey = fromClient.readUTF();
+					System.out.println("Received symmetric key");
+					System.out.println("symKey is: " + symKey);
+					byte[] decodedKey = Base64.getDecoder().decode(symKey);
+					AESKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+				}
 
 				// If the packet is for transferring the filename
 				if (packetType == 0) { // 0 => file name
+
+					// reset packet count for new file
+					packetCount = 0;
 
 					System.out.println("Receiving file...");
 
@@ -119,33 +109,35 @@ public class ServerWithCP2 {
 
 					// count
 					packetCount++;
-					System.out.println("packetCount:" + packetCount);
+					// System.out.println("packetCount:" + packetCount);
 
 					// decrypt the data
 					// byte[] blockDecrypted = RSA.decrypt(block, serverPrivateKey);
 					// byte[] encodedKey = decoder.decodeBuffer(keyString);
-					byte[] decodedKey = Base64.getDecoder().decode(symKey);
-					Key symkey = new SecretKeySpec(decodedKey, 0 ,decodedKey.length, "AES");  
-					// getDecoder().decode(symKey), 0, symKey.length, "AES");
-					byte[] blockDecrypted = AES.decrypt(block, symkey);
+					System.out.println(Base64.getEncoder().encodeToString(AESKey.getEncoded()));
+					byte[] blockDecrypted = AES.decrypt(block, AESKey);
 
 					// print the packet in string
-					System.out.println(Base64.getEncoder().encodeToString(blockDecrypted));
+					// System.out.println(Base64.getEncoder().encodeToString(blockDecrypted));
 
 					if (numBytes > 0)
 						bufferedFileOutputStream.write(blockDecrypted, 0, numBytes);
 
 					if (numBytes < 117) {
-						System.out.println("Closing connection...");
-
+						System.out.println("Received file");
+						System.out.println("Total packets received: " + packetCount);
+						System.out.println("");
 						if (bufferedFileOutputStream != null)
 							bufferedFileOutputStream.close();
 						if (bufferedFileOutputStream != null)
 							fileOutputStream.close();
-						fromClient.close();
-						toClient.close();
-						connectionSocket.close();
 					}
+				}
+				if (packetType == 4) { // 4 => End of transfer
+					System.out.println("Closing connection...");
+					fromClient.close();
+					toClient.close();
+					connectionSocket.close();
 				}
 			}
 		} catch (Exception e) {
