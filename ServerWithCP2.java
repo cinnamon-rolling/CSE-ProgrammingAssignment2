@@ -72,10 +72,12 @@ public class ServerWithCP2 {
 				if (packetType == 72) {
 					// read message from socket
 					String symKey = fromClient.readUTF();
+					byte[] decodedKey = RSA.decrypt(Base64.getDecoder().decode(symKey), serverPrivateKey);
 					System.out.println("Received symmetric key");
-					System.out.println("symKey is: " + symKey);
-					byte[] decodedKey = Base64.getDecoder().decode(symKey);
 					AESKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+					symKey = Base64.getEncoder().encodeToString(AESKey.getEncoded());
+					System.out.println("symKey is: " + symKey);
+					System.out.println();
 				}
 
 				// If the packet is for transferring the filename

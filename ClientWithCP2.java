@@ -99,7 +99,8 @@ public class ClientWithCP2 {
 			// send to server
 			toServer.writeInt(72); // 72 => send key
 			System.out.println("Sending key to server");
-			toServer.writeUTF(symKey);
+			toServer.writeUTF(Base64.getEncoder().encodeToString(RSA.encrypt(AESkey.getEncoded(), serverPublicKey)));
+			System.out.println();
 
 			// begin sending files from input arguments
 			for (int i = 0; i < args.length; i++) {
