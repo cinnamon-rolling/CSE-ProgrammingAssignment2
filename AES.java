@@ -13,25 +13,24 @@ public class AES {
         // AES encrypt
         public static byte[] encrypt(byte[] byteArray, Key symmetricKey) throws Exception{
                 // instantiate cipher
-                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS1Padding");
+                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
                 aesCipher.init(Cipher.ENCRYPT_MODE, symmetricKey);
                 
                 // encrypt message
                 byte [] encryptedBytesArray = aesCipher.doFinal(byteArray);
-                System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: "
-                                + encryptedBytesArray.length);
+                // System.out.println("encryptedBytesArray: " + encryptedBytesArray + "\nLength of encryptedBytesArray: " + encryptedBytesArray.length);
                 return encryptedBytesArray;
         }
 
         // AES decrypt
         public static byte[] decrypt(byte[] byteArray, Key symmetricKey) throws Exception{
                 // instantiate cipher
-                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS1Padding");
+                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
                 aesCipher.init(Cipher.DECRYPT_MODE, symmetricKey);
                 // decrypt message
                 byte [] decryptedBytesArray = aesCipher.doFinal(byteArray);
-                System.out.println("decryptedBytesArray: " + decryptedBytesArray + "\nLength of decryptedBytesArray: "
-                                + decryptedBytesArray.length);
+                // System.out.println("decryptedBytesArray: " + decryptedBytesArray + "\nLength of decryptedBytesArray: "
+                //                 + decryptedBytesArray.length);
                 return decryptedBytesArray;
         }
 }
