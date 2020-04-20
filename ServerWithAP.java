@@ -22,8 +22,8 @@ public class ServerWithAP {
 		// read S private key
 		PrivateKey serverPrivateKey;
 		serverPrivateKey = PrivateKeyReader.get("keys_certificate/private_key.der");
-		System.out.println();
 		System.out.println(serverPrivateKey);
+		System.out.println();
 
 		int port = 4321;
 		if (args.length > 0)
@@ -53,6 +53,7 @@ public class ServerWithAP {
 				if (packetType == 69) {
 					System.out.println("client requested for authentication");
 					toClient.writeUTF("hi, this is secstore");
+					System.out.println();
 				}
 				if (packetType == 70) {
 					toClient.writeUTF(Base64.getEncoder().encodeToString(serverCert.getEncoded()));
@@ -64,6 +65,9 @@ public class ServerWithAP {
 
 				// If the packet is for transferring the filename
 				if (packetType == 0) { // 0 => file name
+
+					// reset packet count for new file
+					packetCount = 0;
 
 					System.out.println("Receiving file...");
 
@@ -90,28 +94,32 @@ public class ServerWithAP {
 
 					// count
 					packetCount++;
-					System.out.println("packetCount:" + packetCount);
+					// System.out.println("packetCount:" + packetCount);
 
 					// decrypt the data
 					byte[] blockDecrypted = RSA.decrypt(block, serverPrivateKey);
 
 					// print the packet in string
-					System.out.println(Base64.getEncoder().encodeToString(blockDecrypted));
+					// System.out.println(Base64.getEncoder().encodeToString(blockDecrypted));
 
 					if (numBytes > 0)
 						bufferedFileOutputStream.write(blockDecrypted, 0, numBytes);
 
 					if (numBytes < 117) {
-						System.out.println("Closing connection...");
-
+						System.out.println("Received file");
+						System.out.println("Total packets received: " + packetCount);
+						System.out.println("");
 						if (bufferedFileOutputStream != null)
 							bufferedFileOutputStream.close();
 						if (bufferedFileOutputStream != null)
 							fileOutputStream.close();
-						fromClient.close();
-						toClient.close();
-						connectionSocket.close();
 					}
+				}
+				if (packetType == 4) { // 4 => End of transfer
+					System.out.println("Closing connection...");
+					fromClient.close();
+					toClient.close();
+					connectionSocket.close();
 				}
 			}
 		} catch (Exception e) {

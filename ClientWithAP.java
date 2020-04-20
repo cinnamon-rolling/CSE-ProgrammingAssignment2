@@ -12,30 +12,22 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
 
 public class ClientWithAP {
 
 	public static void main(String[] args) throws Exception {
-
 		// get CA cert
 		X509Certificate CAcert = CertificateReader.get("keys_certificate/cacse.crt");
 
 		// get CA public key
 		PublicKey CAPublicKey = CAcert.getPublicKey();
 		System.out.println("CAPublicKey: " + CAPublicKey);
-
-		String filename = "100.txt";
-		if (args.length > 0)
-			filename = args[0];
+		System.out.println();
 
 		String serverAddress = "localhost";
-		if (args.length > 1)
-			filename = args[1];
-
 		int port = 4321;
-		if (args.length > 2)
-			port = Integer.parseInt(args[2]);
 
 		int numBytes = 0;
 
@@ -64,7 +56,7 @@ public class ClientWithAP {
 			toServer.writeInt(70); // 70 => ask for cert signed by CA
 
 			// receive cert from server
-			System.out.println("receiving server's certificate in string");
+			System.out.println("Receiving server's certificate");
 			String serverCertString = fromServer.readUTF();
 			X509Certificate serverCert = CertificateReader.get_from_string(serverCertString);
 
@@ -83,63 +75,80 @@ public class ClientWithAP {
 				clientSocket.close();
 			}
 			System.out.println("Server's certificate is verified");
+			System.out.println();
 
-			// begin handshake for file upload
-			System.out.println("Sending file...");
-			// Send the filename
-			toServer.writeInt(0); // 0 => file name
-			toServer.writeInt(filename.getBytes().length);
-			toServer.write(filename.getBytes());
-			//toServer.flush();
+			// begin sending files from input arguments
+			for (int i = 0; i < args.length; i++) {
 
-			// Open the file
-			fileInputStream = new FileInputStream(filename);
-			bufferedFileInputStream = new BufferedInputStream(fileInputStream);
+				String filename = args[i];
 
-			byte[] fromFileBuffer = new byte[117];
-
-			int packetCount = 0;
-
-			// Send the file
-			for (boolean fileEnded = false; !fileEnded;) {
-				// send 3 packets
-				// numBytes = number of bytes before encryption, to be written
-				// numBytesEncrypted = number of bytes after encryption, to be read from the buffer
-
-				numBytes = bufferedFileInputStream.read(fromFileBuffer);
-				fileEnded = numBytes < 117;
-
-				toServer.writeInt(1); // 1 => file chunk
-				toServer.writeInt(numBytes);
-				System.out.println(numBytes);
-
-				System.out.println("original bytes: " + fromFileBuffer);
-				System.out.println("before encryption length: " + fromFileBuffer.length);
-
-				// encrypt the data
-				byte[] fromFileBufferEncrypted = RSA.encrypt(fromFileBuffer, serverPublicKey);
-
-				int numBytesEncryted = fromFileBufferEncrypted.length;
-				toServer.writeInt(numBytesEncryted);
-				System.out.println(numBytesEncryted);
-
-				// send the data
-				toServer.write(fromFileBufferEncrypted);
+				// begin handshake for file upload
+				System.out.println("Sending " + filename + "...");
+				// Send the filename
+				toServer.writeInt(0); // 0 => file name
+				toServer.writeInt(filename.getBytes().length);
+				toServer.write(filename.getBytes());
 				toServer.flush();
 
-				// count and print the packet in string
-				packetCount++;
-				System.out.println("packetCount:" + packetCount);
-				System.out.println(Base64.getEncoder().encodeToString(fromFileBuffer));
+				// Open the file
+				fileInputStream = new FileInputStream(filename);
+				bufferedFileInputStream = new BufferedInputStream(fileInputStream);
 
+				byte[] fromFileBuffer = new byte[117];
+
+				int packetCount = 0;
+
+				// Send the file
+				for (boolean fileEnded = false; !fileEnded;) {
+					// send 3 packets
+					// numBytes = number of bytes before encryption, to be written
+					// numBytesEncrypted = number of bytes after encryption, to be read from the buffer
+
+					numBytes = bufferedFileInputStream.read(fromFileBuffer);
+					fileEnded = numBytes < 117;
+
+					toServer.writeInt(1); // 1 => file chunk
+					toServer.writeInt(numBytes);
+					// System.out.println(numBytes);
+
+					// System.out.println("original bytes: " + fromFileBuffer);
+					// System.out.println("before encryption length: " + fromFileBuffer.length);
+
+					// encrypt the data
+					byte[] fromFileBufferEncrypted = RSA.encrypt(fromFileBuffer, serverPublicKey);
+
+					int numBytesEncryted = fromFileBufferEncrypted.length;
+					toServer.writeInt(numBytesEncryted);
+					// System.out.println(numBytesEncryted);
+
+					// send the data
+					toServer.write(fromFileBufferEncrypted);
+					toServer.flush();
+
+					// count and print the packet in string
+					packetCount++;
+					// System.out.println("packetCount:" + packetCount);
+					// System.out.println(Base64.getEncoder().encodeToString(fromFileBuffer));
+
+				}
+
+				System.out.println("Sent " + filename);
+				System.out.println("Total packets sent: " + packetCount);
+				System.out.println("");
+
+				if (i == args.length - 1) {
+					// send EOF packet
+					toServer.writeInt(4); // 4 => End of transfer
+					bufferedFileInputStream.close();
+					fileInputStream.close();
+				}
 			}
-
-			bufferedFileInputStream.close();
-			fileInputStream.close();
 
 			System.out.println("Closing connection...");
 
-		} catch (Exception e) {
+		} catch (
+
+		Exception e) {
 			e.printStackTrace();
 		}
 
