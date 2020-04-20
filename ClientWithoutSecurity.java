@@ -70,7 +70,8 @@ public class ClientWithoutSecurity {
 				// count and print the packet in string
 				packetCount++;
 				System.out.println("packetCount:" + packetCount);
-				System.out.println(Base64.getEncoder().encodeToString(fromFileBuffer));
+				System.out.println(new String(fromFileBuffer));
+				// System.out.println(Base64.getEncoder().encodeToString(fromFileBuffer));
 
 			}
 

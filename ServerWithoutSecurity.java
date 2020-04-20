@@ -58,7 +58,8 @@ public class ServerWithoutSecurity {
 					// count and print the packet in string
 					packetCount++;
 					System.out.println("packetCount:" + packetCount);
-					System.out.println(Base64.getEncoder().encodeToString(block));
+					System.out.println(new String(fromFileBuffer));
+					// System.out.println(Base64.getEncoder().encodeToString(block));
 
 					if (numBytes > 0)
 						bufferedFileOutputStream.write(block, 0, numBytes);

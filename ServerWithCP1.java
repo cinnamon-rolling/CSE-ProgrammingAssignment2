@@ -105,6 +105,9 @@ public class ServerWithCP1 {
 
 					// print the packet in string
 					// System.out.println(Base64.getEncoder().encodeToString(blockDecrypted));
+					System.out.println(new String(block));
+					System.out.println(new String(blockDecrypted));
+					System.out.println();
 
 					if (numBytes > 0)
 						bufferedFileOutputStream.write(blockDecrypted, 0, numBytes);
