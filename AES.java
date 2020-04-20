@@ -13,7 +13,7 @@ public class AES {
         // AES encrypt
         public static byte[] encrypt(byte[] byteArray, Key symmetricKey) throws Exception{
                 // instantiate cipher
-                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                Cipher aesCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
                 aesCipher.init(Cipher.ENCRYPT_MODE, symmetricKey);
                 
                 // encrypt message
@@ -25,7 +25,7 @@ public class AES {
         // AES decrypt
         public static byte[] decrypt(byte[] byteArray, Key symmetricKey) throws Exception{
                 // instantiate cipher
-                Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                Cipher aesCipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
                 aesCipher.init(Cipher.DECRYPT_MODE, symmetricKey);
                 // decrypt message
                 byte [] decryptedBytesArray = aesCipher.doFinal(byteArray);
