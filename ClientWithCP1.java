@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 
-public class ClientWithAP {
+public class ClientWithCP1 {
 
 	public static void main(String[] args) throws Exception {
 		// get CA cert
@@ -52,7 +52,9 @@ public class ClientWithAP {
 
 			// do authentication
 			toServer.writeInt(69); // 69 => ask to prove identity
-			String encryptedM = fromServer.readUTF();
+			String clientMessage = "wasssss1ssssup";
+			toServer.writeUTF(clientMessage);
+			String encryptedMessage = fromServer.readUTF();
 			toServer.writeInt(70); // 70 => ask for cert signed by CA
 
 			// receive cert from server
@@ -74,6 +76,19 @@ public class ClientWithAP {
 				System.out.println("Closing connection...");
 				clientSocket.close();
 			}
+
+			// verify server owns the private key associated with the public key in the cert
+			// by decrypting encryptedMessage with server's public key
+
+			String decryptedMessage = Base64.getEncoder()
+					.encodeToString(RSA.decrypt(Base64.getDecoder().decode(encryptedMessage), serverPublicKey));
+
+			if (decryptedMessage.contentEquals(clientMessage)) {
+				toServer.writeInt(71); // 71 => invalid cert, close connection
+				System.out.println("Closing connection...");
+				clientSocket.close();
+			}
+
 			System.out.println("Server's certificate is verified");
 			System.out.println();
 

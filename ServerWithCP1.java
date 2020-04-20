@@ -11,7 +11,7 @@ import java.security.*;
 import java.security.spec.*;
 import java.util.Base64;
 
-public class ServerWithAP {
+public class ServerWithCP1 {
 
 	public static void main(String[] args) throws Exception {
 
@@ -50,9 +50,13 @@ public class ServerWithAP {
 				int packetType = fromClient.readInt();
 				// AP
 				// do authentication
+				String clientMessage;
 				if (packetType == 69) {
 					System.out.println("client requested for authentication");
-					toClient.writeUTF("hi, this is secstore");
+					clientMessage = fromClient.readUTF();
+					String encryptedClientMessage = Base64.getEncoder()
+							.encodeToString(RSA.encrypt(clientMessage.getBytes(), serverPrivateKey));
+					toClient.writeUTF(encryptedClientMessage);
 					System.out.println();
 				}
 				if (packetType == 70) {
