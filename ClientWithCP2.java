@@ -154,9 +154,9 @@ public class ClientWithCP2 {
 					packetCount++;
 					// System.out.println("packetCount:" + packetCount);
 					// System.out.println(Base64.getEncoder().encodeToString(fromFileBuffer));
-					System.out.println(new String(fromFileBuffer));
-					System.out.println(new String(fromFileBufferEncrypted));
-					System.out.println();
+					// System.out.println(new String(fromFileBuffer));
+					// System.out.println(new String(fromFileBufferEncrypted));
+					// System.out.println();
 
 				}
 
