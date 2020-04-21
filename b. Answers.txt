@@ -1,0 +1,6 @@
+problem: requires the knowledge of M for client
+solution:
+client has a M, sends to server
+expects server to encrypt M with serverPrivateKey
+client then decrypts it with serverPublicKey, from server's cert, and compare the result
+if K+(K-(M)) == M, then client can be sure that it's indeed that server, whose public key is as specified in the cert, is the one client is talking to.
