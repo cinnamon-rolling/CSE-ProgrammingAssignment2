@@ -1,3 +1,20 @@
+DONE BY
+Ng Jia Yi 1003696
+Alex Wang 1003474
+
+RUN
+CP1
+javac ServerWithCP1.java && java ServerWithCP1
+javac ClientWithCP1.java && java ClientWithCP1 100.txt 1000.txt pdf1.pdf
+
+CP2
+javac ServerWithCP2.java && java ServerWithCP2
+javac ClientWithCP2.java && java ClientWithCP2 100.txt 1000.txt pdf1.pdf
+
+VERIFY
+md5 100.txt recv_100.txt
+
+
 cacse.crt
 - CA's certificate
 - extract this to get CA's public key
